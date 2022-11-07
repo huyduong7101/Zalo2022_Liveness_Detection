@@ -8,7 +8,7 @@ import importlib
 import cv2
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from dataset import LivenessDataset
 from models import LivenessModel2D
@@ -21,10 +21,13 @@ parser.add_argument('--fold', type=int, default=0, help="fold")
 
 args = parser.parse_args()
 cfg = importlib.import_module(f'configs.{args.config}')
-cfg.fold = args.fold
-cfg.train_data_path = os.path.join(args.data_dir, "train/extraced_frames")
 
-data_df = pd.read_csv(os.path.join(args.data_dir, "data/label.csv"))
+cfg.fold = args.fold
+cfg.train_data_path = os.path.join(args.data_dir, "train")
+cfg.test_data_path = os.path.join(args.data_dir, "public_test")
+cfg.log_dir = os.path.join(args.log_dir, cfg.version)
+
+data_df = pd.read_csv(os.path.join(args.data_dir, "data/label_with_folding.csv"))
 train_df = data_df[data_df['fold']!=cfg.fold].reset_index(drop=True)
 valid_df = data_df[data_df['fold']==cfg.fold].reset_index(drop=True)
 
@@ -40,6 +43,12 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=cfg.batch_s
 
 model = LivenessModel2D(cfg)
 
-trainer = pl.Trainer()
+checkpoint_callback = ModelCheckpoint(
+    dirpath = cfg.log_dir,
+    filename = '{epoch}-{val_loss:.2f}',
+    every_n_epochs= cfg.save_weight_frequency
+)
+
+trainer = pl.Trainer(callbacks=[checkpoint_callback])
 trainer.fit(model, train_loader, valid_loader)
 

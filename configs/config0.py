@@ -25,6 +25,7 @@ class CFG():
     # log and path
     train_data_path = None
     test_data_path = None
+    save_weight_frequency = 1
 
 
 CFG.train_transforms = A.Compose(

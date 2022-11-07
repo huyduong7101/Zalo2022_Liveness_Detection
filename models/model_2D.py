@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 import timm
 
-class LivenessModel(pl.LightningModule):
+class LivenessModel2D(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         self.cfg = cfg
