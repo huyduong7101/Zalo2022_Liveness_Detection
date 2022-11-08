@@ -52,16 +52,16 @@ class LivenessModel2D(pl.LightningModule):
 
         loss = self.criteria(y_pred, y)
 
-        self.log("train_loss", loss, prog_bar=True)
+        self.log("train_loss", loss)
         return {'loss': loss, 'preds':y_pred, 'labels':y}
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         y_pred = self(x).view(-1)
         
-        loss = self.criteria(y, y_pred)
+        loss = self.criteria(y_pred, y)
 
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss)
         return {'loss': loss, 'preds':y_pred, 'labels':y} 
 
     def compute_metrics(self, outputs):

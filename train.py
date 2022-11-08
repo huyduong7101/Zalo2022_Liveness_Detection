@@ -10,29 +10,30 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from dataset import LivenessDataset
 from models import LivenessModel2D
+from datasets import LivenessDataset
+
 
 parser = argparse.ArgumentParser(description='Arguments')
 parser.add_argument('--config', type=str, default='config0', help='config file')
 parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
-parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
+parser.add_argument('--log_dir', type=str, default='./lightning_logs', help='data directory')
 parser.add_argument('--fold', type=int, default=0, help="fold")
 
 args = parser.parse_args()
-cfg = importlib.import_module(f'configs.{args.config}')
+cfg = importlib.import_module(f'configs.{args.config}').CFG
 
 cfg.fold = args.fold
-cfg.train_data_path = os.path.join(args.data_dir, "train")
-cfg.test_data_path = os.path.join(args.data_dir, "public_test")
+cfg.train_data_dir = os.path.join(args.data_dir, "train")
+cfg.test_data_dir = os.path.join(args.data_dir, "public_test")
 cfg.log_dir = os.path.join(args.log_dir, cfg.version)
 
-data_df = pd.read_csv(os.path.join(args.data_dir, "data/label_with_folding.csv"))
+data_df = pd.read_csv(os.path.join(args.data_dir, "label_with_folding.csv"))
 train_df = data_df[data_df['fold']!=cfg.fold].reset_index(drop=True)
 valid_df = data_df[data_df['fold']==cfg.fold].reset_index(drop=True)
 
-train_dataset = LivenessDataset(df=train_df, data_path=cfg.train_data_path, ext=cfg.ext, transforms=cfg.train_transforms)
-valid_dataset = LivenessDataset(df=valid_df, data_path=cfg.train_data_path, ext=cfg.ext, transforms=cfg.val_transforms)
+train_dataset = LivenessDataset(df=train_df, root_dir=cfg.train_data_dir, ext=cfg.ext, transforms=cfg.train_transforms)
+valid_dataset = LivenessDataset(df=valid_df, root_dir=cfg.train_data_dir, ext=cfg.ext, transforms=cfg.val_transforms)
 
 cfg.len_train = len(train_dataset)
 
@@ -49,6 +50,6 @@ checkpoint_callback = ModelCheckpoint(
     every_n_epochs= cfg.save_weight_frequency
 )
 
-trainer = pl.Trainer(callbacks=[checkpoint_callback])
+trainer = pl.Trainer(max_epochs= cfg.num_epochs,
+                    callbacks=[checkpoint_callback])
 trainer.fit(model, train_loader, valid_loader)
-

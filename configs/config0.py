@@ -4,7 +4,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 class CFG():
     # training
     version = "baseline_2D"
-    backbone = "tf_efficientnet_b0_ns"
+    backbone = "tf_efficientnet_b2_ns"
     pretrained = True
     head_type = "classify"
 
@@ -12,12 +12,12 @@ class CFG():
     liveness_threshold = 0.5
 
     # data
-    height = 224
-    width = 224
+    height = 260
+    width = 260
     ext = "jpg"
 
     # optimizer
-    learning_rate = 1e-6
+    learning_rate = 1e-4
     batch_size = 4
     num_workers = 2
     num_epochs = 10
