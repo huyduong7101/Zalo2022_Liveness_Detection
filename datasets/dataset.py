@@ -19,18 +19,23 @@ class LivenessDataset(Dataset):
         item_name = item["fname"].split(".")[0]
 
         # get item from extracted frames folder
-        # item_path = os.path.join(self.root_dir, f"{item_name}/0.{self.ext}") # just use the first frame
-        # img = cv2.imread(item_path)
+        item_path = os.path.join(self.root_dir, f"extracted_frames/{item_name}/0.{self.ext}") # just use the first frame
+        img = cv2.imread(item_path)
 
 
         # get item directly from original video
-        item_path = os.path.join(self.root_dir, f"videos/{item_name}.mp4")
-        cap = cv2.VideoCapture(item_path)
-        cap.set(1,0) # 0 is the frame you want
-        ret, img = cap.read(0)
+        # item_path = os.path.join(self.root_dir, f"videos/{item_name}.mp4")
+        # cap = cv2.VideoCapture(item_path)
+        # cap.set(1,0) # 0 is the frame you want
+        # ret, img = cap.read(0)
 
         if self.transforms:
             img = self.transforms(image=img)["image"].float()
-        label = torch.tensor(item["liveness_score"]).float()
+
+        if "liveness_score" in item.columns:
+            label = torch.tensor(item["liveness_score"]).float()
+        else:
+            label = -1
+            
         return img, label
 

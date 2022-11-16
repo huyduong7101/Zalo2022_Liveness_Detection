@@ -20,7 +20,7 @@ class CFG():
     learning_rate = 1e-4
     batch_size = 4
     num_workers = 2
-    num_epochs = 10
+    num_epochs = 30
 
     # log and path
     train_data_path = None

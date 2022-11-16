@@ -6,9 +6,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 import pytorch_lightning as pl
 import timm
+
+from utils import equal_error_rate
 
 class LivenessModel2D(pl.LightningModule):
     def __init__(self, cfg):
@@ -36,7 +37,6 @@ class LivenessModel2D(pl.LightningModule):
         steps_per_epoch = int(self.cfg.len_train / self.cfg.num_epochs)
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
         scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
-        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=1e-6)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):
@@ -64,12 +64,19 @@ class LivenessModel2D(pl.LightningModule):
         self.log("val_loss", loss)
         return {'loss': loss, 'preds':y_pred, 'labels':y} 
 
+    def predict_step(self, batch, batch_idx):
+        x, y = batch
+        y_pred = self(x).view(-1)
+
+        return y_pred
+
     def compute_metrics(self, outputs):
         all_preds = np.concatenate([out['preds'].detach().cpu().numpy() for out in outputs])
         all_labels = np.concatenate([out['labels'].detach().cpu().numpy() for out in outputs])
         all_preds = (all_preds > self.cfg.liveness_threshold).astype(int)
         f1 = float(f1_score(y_true=all_labels, y_pred=all_preds))
-        return {"f1": f1}
+        eer, _ = equal_error_rate(all_labels, all_preds)
+        return {"f1": f1, "eer": eer}
 
     def training_epoch_end(self, training_step_outputs):
         metrics = self.compute_metrics(training_step_outputs)

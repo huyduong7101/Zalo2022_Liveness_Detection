@@ -17,8 +17,10 @@ from datasets import LivenessDataset
 parser = argparse.ArgumentParser(description='Arguments')
 parser.add_argument('--config', type=str, default='config0', help='config file')
 parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
-parser.add_argument('--log_dir', type=str, default='./lightning_logs', help='data directory')
+parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
 parser.add_argument('--fold', type=int, default=0, help="fold")
+parser.add_argument('--accelerator', type=str, default="cuda", help="accelerator")
+parser.add_argument('--devices', type=int, default=1, help="device")
 
 args = parser.parse_args()
 cfg = importlib.import_module(f'configs.{args.config}').CFG
@@ -45,11 +47,18 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=cfg.batch_s
 model = LivenessModel2D(cfg)
 
 checkpoint_callback = ModelCheckpoint(
-    dirpath = cfg.log_dir,
-    filename = '{epoch}-{val_loss:.2f}',
-    every_n_epochs= cfg.save_weight_frequency
+    # dirpath=cfg.log_dir,
+    filename='{epoch}-{val_loss:.2f}-{val_f1:.2f}',
+    monitor="val_f1",
+    save_last=True,
+    save_top_k=max(1,cfg.num_epochs//5),
+    mode = "max",
+    every_n_epochs=cfg.save_weight_frequency
 )
 
-trainer = pl.Trainer(max_epochs= cfg.num_epochs,
+trainer = pl.Trainer(default_root_dir=cfg.log_dir,
+                    max_epochs= cfg.num_epochs,
+                    devices=args.devices,
+                    accelerator=args.accelerator,
                     callbacks=[checkpoint_callback])
 trainer.fit(model, train_loader, valid_loader)
