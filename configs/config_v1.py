@@ -3,11 +3,11 @@ from albumentations.pytorch.transforms import ToTensorV2
 
 class CFG():
     # training
-    version = "baseline_2D"
+    version = "baseline_2D_LSTM"
     backbone = "tf_efficientnet_b2_ns"
     pretrained = True
     head_type = "classify"
-    fold = 0
+    hidden_dim_lstm = 256
     
     # hyperparameters
     liveness_threshold = 0.5
@@ -15,7 +15,9 @@ class CFG():
     # data
     height = 260
     width = 260
+    num_frames = 3
     ext = "jpg"
+    fold = 0
 
     # optimizer
     learning_rate = 1e-4
