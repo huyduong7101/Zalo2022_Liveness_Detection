@@ -33,10 +33,12 @@ class CFG():
 
 CFG.train_transforms = A.Compose(
         [
+            A.Resize(height=CFG.height, width=CFG.width, always_apply=True),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
-
-            A.Resize(height=CFG.height, width=CFG.width, always_apply=True),
+            A.Transpose(p=0.5),
+            A.RandomBrightness(limit=0.1, p=0.5),
+            A.ShiftScaleRotate(border_mode=4, p=0.5),
             A.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ToTensorV2(always_apply=True),
         ],
