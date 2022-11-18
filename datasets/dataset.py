@@ -36,7 +36,7 @@ class LivenessDataset(Dataset):
             if self.transforms:
                 imgs = self.transforms(image=img)["image"].float()
         else:
-            step = np.ceil(total_frame / self.num_frames)
+            step = np.floor(total_frame / self.num_frames)
             frames = [i*step for i in range(self.num_frames)]
             imgs = []
             for frame in frames:
@@ -47,12 +47,12 @@ class LivenessDataset(Dataset):
                         img = self.transforms(image=img)["image"].float()
                     imgs.append(img)
                 else:
-                    print("The number of frames is not enough.")
+                    print(f"The number of frames is not enough | Total frame: {total_frame} | {frames}")
             imgs = np.stack(imgs, 0)
 
-            if "liveness_score" in self.df.columns:
-                label = torch.tensor(item["liveness_score"]).float()
-            else:
-                label = -1
+        if "liveness_score" in self.df.columns:
+            label = torch.tensor(item["liveness_score"]).float()
+        else:
+            label = -1
     
         return imgs, label

@@ -16,6 +16,7 @@ class CFG():
     height = 260
     width = 260
     ext = "jpg"
+    num_frames = 1
 
     # optimizer
     learning_rate = 1e-4

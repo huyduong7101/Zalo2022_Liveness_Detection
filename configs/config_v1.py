@@ -15,7 +15,7 @@ class CFG():
     # data
     height = 260
     width = 260
-    num_frames = 3
+    num_frames = 10
     ext = "jpg"
     fold = 0
 

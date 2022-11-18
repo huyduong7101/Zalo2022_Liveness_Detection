@@ -21,10 +21,11 @@ def opt():
     parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
     parser.add_argument('--accelerator', type=str, default="cuda", help="accelerator")
     parser.add_argument('--devices', type=int, default=1, help="device")
+    parser.add_argument('--num_frames', type=int, default=1, help="device")
 
     args = parser.parse_args()
     cfg = importlib.import_module(f'configs.{args.config}').CFG
-
+    cfg.num_frames = args.num_frames
     cfg.train_data_dir = args.data_dir
     # cfg.test_data_dir = os.path.join(args.data_dir, "public_test")
     cfg.log_dir = os.path.join(args.log_dir, cfg.version)
