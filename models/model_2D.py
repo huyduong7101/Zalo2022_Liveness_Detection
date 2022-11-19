@@ -30,19 +30,25 @@ class LivenessModel2D(pl.LightningModule):
         else:
             self.head = nn.Sigmoid()
             self.criteria = nn.BCELoss()
+        self.global_avg = nn.AdaptiveAvgPool1d(1)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.cfg.learning_rate)
 
         steps_per_epoch = int(self.cfg.len_train / self.cfg.num_epochs)
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.cfg.learning_rate, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate / 10)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):
         # in lightning, forward defines the prediction/inference actions
+        batch_size = x.shape[0]
+        x = x.view(batch_size*self.cfg.num_frames, 3, self.cfg.height, self.cfg.width)
         out = self.backbone(x)
         out = self.head(out)
+        out = out.view(batch_size, self.cfg.num_frames).contiguous()
+        out = self.global_avg(out)
         return out
 
     def training_step(self, batch, batch_idx):

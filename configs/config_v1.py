@@ -8,6 +8,7 @@ class CFG():
     pretrained = True
     head_type = "classify"
     hidden_dim_lstm = 256
+    use_lstm = True
     
     # hyperparameters
     liveness_threshold = 0.5
