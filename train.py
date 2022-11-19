@@ -9,6 +9,7 @@ import cv2
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
+from pytorch_lightning.loggers import WandbLogger
 
 from models import LivenessModel2D, LivenessModel2DLSTM
 from datasets import LivenessDataset
@@ -22,7 +23,7 @@ def opt():
     parser.add_argument('--accelerator', type=str, default="cuda", help="accelerator")
     parser.add_argument('--devices', type=int, default=1, help="device")
     parser.add_argument('--num_frames', type=int, default=1, help="device")
-
+    parser.add_argument('--num_epochs', type=int, default=10, help="device")
 
     args = parser.parse_args()
     cfg = importlib.import_module(f'configs.{args.config}').CFG
@@ -31,13 +32,13 @@ def opt():
     # cfg.test_data_dir = os.path.join(args.data_dir, "public_test")
     cfg.log_dir = os.path.join(args.log_dir, cfg.version)
     cfg.split_path = args.split_path
+    cfg.num_epochs = args.num_epochs
 
     return cfg, args
 
 def main(cfg, args):
     data_df = pd.read_csv(cfg.split_path)
     data_df = data_df[data_df.set == "train"]
-
     train_df = data_df[data_df['fold']!=float(cfg.fold)].reset_index(drop=True)
     valid_df = data_df[data_df['fold']==float(cfg.fold)].reset_index(drop=True)
 
@@ -47,9 +48,9 @@ def main(cfg, args):
     cfg.len_train = len(train_dataset)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.batch_size, shuffle=True,
-                                                num_workers=cfg.num_workers)
+                                                num_workers=cfg.num_workers, pin_memory=True)
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=cfg.batch_size, shuffle=False,
-                                                num_workers=cfg.num_workers)
+                                                num_workers=cfg.num_workers, pin_memory=True)
 
     if cfg.use_lstm:
         model = LivenessModel2DLSTM(cfg)
@@ -66,6 +67,8 @@ def main(cfg, args):
         every_n_epochs=cfg.save_weight_frequency
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
+
+    # wandb_logger = WandbLogger(project=cfg.project_name)
 
     trainer = pl.Trainer(default_root_dir=cfg.log_dir,
                         max_epochs= cfg.num_epochs,
