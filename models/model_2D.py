@@ -38,7 +38,7 @@ class LivenessModel2D(pl.LightningModule):
         steps_per_epoch = int(self.cfg.len_train / self.cfg.num_epochs)
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.cfg.learning_rate, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate / 10)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate / 100)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):
