@@ -35,10 +35,11 @@ class LivenessModel2D(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.cfg.learning_rate)
 
-        steps_per_epoch = int(self.cfg.len_train / self.cfg.num_epochs)
+        steps_per_epoch = int(self.cfg.len_train / self.cfg.batch_size)
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.cfg.learning_rate, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate_min)
+        # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate_min)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,10,15], gamma=0.5)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):

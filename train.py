@@ -22,6 +22,7 @@ def opt():
     parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
     parser.add_argument('--split_path', type=str, default='./data', help='data directory')
     parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
+    parser.add_argument('--num_version', type=str, default="v0", help="accelerator")
 
     # training
     parser.add_argument('--accelerator', type=str, default="cuda", help="accelerator")
@@ -40,9 +41,10 @@ def opt():
 
     # log path
     cfg.train_data_dir = args.data_dir
-    cfg.log_dir = os.path.join(args.log_dir, cfg.model_name)
+    cfg.log_dir = os.path.join(args.log_dir, os.path.join(f"{cfg.model_name}_{cfg.backbone}", cfg.num_version))
     cfg.split_path = args.split_path
-
+    cfg.num_version = args.num_version
+    
     # training
     cfg.num_epochs = args.num_epochs
     cfg.learning_rate = args.learning_rate
@@ -76,13 +78,13 @@ def main(cfg, args):
     else:
         model = LivenessModel2D(cfg)
 
-    logger = CometLogger(api_key=cfg.comet_api_key, project_name=cfg.comet_project_name, experiment_name=f"{cfg.model_name}/{cfg.backbone}")
+    logger = CometLogger(api_key=cfg.comet_api_key, project_name=cfg.comet_project_name, experiment_name=f"{cfg.model_name}/{cfg.backbone}/{cfg.num_version}")
     checkpoint_callback = ModelCheckpoint(
-        # dirpath=cfg.log_dir,
-        filename='{epoch}-{val_loss:.2f}-{val_f1:.2f}-{val_eer:.2f}',
+        dirpath=cfg.log_dir,
+        filename='{epoch}-{val_loss:.3f}-{val_f1:.3f}-{val_eer:.3f}',
         monitor="val_eer",
         save_last=True,
-        save_top_k=max(1,cfg.num_epochs//5),
+        save_top_k=max(5,cfg.num_epochs//5),
         mode = "min",
         every_n_epochs=cfg.save_weight_frequency
     )
