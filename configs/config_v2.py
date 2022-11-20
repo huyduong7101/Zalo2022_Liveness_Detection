@@ -30,7 +30,8 @@ class CFG():
     train_data_path = None
     test_data_path = None
     save_weight_frequency = 1
-
+    comet_api_key = "MqbVRKXYTLalajpK9uSDwDtOk"
+    comet_project_name = "Zalo2022_LivenessDetection"
 
 CFG.train_transforms = A.Compose(
         [

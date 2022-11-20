@@ -101,4 +101,4 @@ class LivenessModel2D(pl.LightningModule):
     def validation_epoch_end(self, validation_step_outputs):
         metrics = self.compute_metrics(validation_step_outputs)
         for k, v in metrics.items():
-            self.log(f'val_{k}', v, prog_bar=True)
+            self.log(f'val_{k}', v, prog_bar=False)

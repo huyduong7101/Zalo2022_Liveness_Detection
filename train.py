@@ -9,7 +9,7 @@ import cv2
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, CometLogger
 
 from models import LivenessModel2D, LivenessModel2DLSTM
 from datasets import LivenessDataset
@@ -30,6 +30,7 @@ def opt():
     parser.add_argument('--learning_rate', type=float, default=1e-4, help="device")
     parser.add_argument('--learning_rate_min', type=float, default=1e-6, help="device")
     parser.add_argument('--batch_size', type=int, default=4, help="device")
+    parser.add_argument('--backbone', type=str, default="tf_efficientnet_b2_ns", help="accelerator")
 
     # data
     parser.add_argument('--num_frames', type=int, default=1, help="device")
@@ -47,6 +48,7 @@ def opt():
     cfg.learning_rate = args.learning_rate
     cfg.learning_rate_min = args.learning_rate_min
     cfg.batch_size = args.batch_size
+    cfg.backbone = args.backbone
 
     # data
     cfg.num_frames = args.num_frames
@@ -74,6 +76,7 @@ def main(cfg, args):
     else:
         model = LivenessModel2D(cfg)
 
+    logger = CometLogger(api_key=cfg.comet_api_key, project_name=cfg.comet_project_name, experiment_name=f"{cfg.model_name}/{cfg.backbone}")
     checkpoint_callback = ModelCheckpoint(
         # dirpath=cfg.log_dir,
         filename='{epoch}-{val_loss:.2f}-{val_f1:.2f}-{val_eer:.2f}',
@@ -85,12 +88,11 @@ def main(cfg, args):
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    # wandb_logger = WandbLogger(project=cfg.project_name)
-
     trainer = pl.Trainer(default_root_dir=cfg.log_dir,
                         max_epochs= cfg.num_epochs,
                         devices=args.devices,
                         accelerator=args.accelerator,
+                        logger=logger,
                         callbacks=[checkpoint_callback, lr_monitor])
 
     print("=="*20)
