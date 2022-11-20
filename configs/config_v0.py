@@ -3,7 +3,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 
 class CFG():
     # training
-    version = "baseline_2D"
+    model_name = "2D_singleframe"
     backbone = "tf_efficientnet_b2_ns"
     pretrained = True
     head_type = "classify"

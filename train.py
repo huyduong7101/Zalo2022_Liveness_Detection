@@ -16,23 +16,40 @@ from datasets import LivenessDataset
 
 def opt():
     parser = argparse.ArgumentParser(description='Arguments')
+
+    # log path
     parser.add_argument('--config', type=str, default='config0', help='config file')
     parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
     parser.add_argument('--split_path', type=str, default='./data', help='data directory')
     parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
+
+    # training
     parser.add_argument('--accelerator', type=str, default="cuda", help="accelerator")
     parser.add_argument('--devices', type=int, default=1, help="device")
-    parser.add_argument('--num_frames', type=int, default=1, help="device")
     parser.add_argument('--num_epochs', type=int, default=10, help="device")
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help="device")
+    parser.add_argument('--learning_rate_min', type=float, default=1e-6, help="device")
+    parser.add_argument('--batch_size', type=int, default=4, help="device")
+
+    # data
+    parser.add_argument('--num_frames', type=int, default=1, help="device")
 
     args = parser.parse_args()
     cfg = importlib.import_module(f'configs.{args.config}').CFG
-    cfg.num_frames = args.num_frames
+
+    # log path
     cfg.train_data_dir = args.data_dir
-    # cfg.test_data_dir = os.path.join(args.data_dir, "public_test")
-    cfg.log_dir = os.path.join(args.log_dir, cfg.version)
+    cfg.log_dir = os.path.join(args.log_dir, cfg.model_name)
     cfg.split_path = args.split_path
+
+    # training
     cfg.num_epochs = args.num_epochs
+    cfg.learning_rate = args.learning_rate
+    cfg.learning_rate_min = args.learning_rate_min
+    cfg.batch_size = args.batch_size
+
+    # data
+    cfg.num_frames = args.num_frames
 
     return cfg, args
 
@@ -76,9 +93,11 @@ def main(cfg, args):
                         accelerator=args.accelerator,
                         callbacks=[checkpoint_callback, lr_monitor])
 
+    print("=="*20)
     print(f"Number of datapoints | train: {len(train_dataset)} | valid: {len(valid_dataset)}")
     print(f"Use {cfg.num_frames} frames")
-    
+    print(f"Model: {cfg.model_name} | Version: {trainer.logger.version}")
+    print("=="*20)
     trainer.fit(model, train_loader, valid_loader)
 
 if __name__ == "__main__":

@@ -49,7 +49,7 @@ class LivenessModel2DLSTM(pl.LightningModule):
         steps_per_epoch = int(self.cfg.len_train / self.cfg.num_epochs)
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate / 10)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate_min / 10)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):
@@ -110,9 +110,9 @@ class LivenessModel2DLSTM(pl.LightningModule):
     def training_epoch_end(self, training_step_outputs):
         metrics = self.compute_metrics(training_step_outputs)
         for k, v in metrics.items():
-            self.log(f'train_{k}', v, prog_bar=True)
+            self.log(f'train_{k}', v, prog_bar=False)
         
     def validation_epoch_end(self, validation_step_outputs):
         metrics = self.compute_metrics(validation_step_outputs)
         for k, v in metrics.items():
-            self.log(f'val_{k}', v, prog_bar=True)
+            self.log(f'val_{k}', v, prog_bar=False)
