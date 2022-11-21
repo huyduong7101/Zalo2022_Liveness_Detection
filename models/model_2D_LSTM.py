@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 import torch
 import torch.nn as nn
@@ -102,10 +102,10 @@ class LivenessModel2DLSTM(pl.LightningModule):
     def compute_metrics(self, outputs):
         all_preds = np.concatenate([out['preds'].detach().cpu().numpy() for out in outputs])
         all_labels = np.concatenate([out['labels'].detach().cpu().numpy() for out in outputs])
-        all_preds = (all_preds > self.cfg.liveness_threshold).astype(int)
-        f1 = float(f1_score(y_true=all_labels, y_pred=all_preds))
+        # all_logits = (all_preds > self.cfg.liveness_threshold).astype(int)
+        auc = float(roc_auc_score(all_labels, all_preds))
         eer, _ = equal_error_rate(all_labels, all_preds)
-        return {"f1": f1, "eer": eer}
+        return {"auc": auc, "eer": eer}
 
     def training_epoch_end(self, training_step_outputs):
         metrics = self.compute_metrics(training_step_outputs)

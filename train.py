@@ -35,13 +35,14 @@ def opt():
 
     # data
     parser.add_argument('--num_frames', type=int, default=1, help="device")
+    parser.add_argument('--ext', type=str, default="mp4", help="device")
 
     args = parser.parse_args()
     cfg = importlib.import_module(f'configs.{args.config}').CFG
 
     # log path
     cfg.train_data_dir = args.data_dir
-    cfg.log_dir = os.path.join(args.log_dir, os.path.join(f"{cfg.model_name}_{cfg.backbone}", cfg.num_version))
+    cfg.log_dir = os.path.join(args.log_dir, os.path.join(f"{cfg.model_name}_{cfg.backbone}", args.num_version))
     cfg.split_path = args.split_path
     cfg.num_version = args.num_version
     
@@ -54,6 +55,7 @@ def opt():
 
     # data
     cfg.num_frames = args.num_frames
+    cfg.ext = args.ext
 
     return cfg, args
 
@@ -81,11 +83,11 @@ def main(cfg, args):
     logger = CometLogger(api_key=cfg.comet_api_key, project_name=cfg.comet_project_name, experiment_name=f"{cfg.model_name}/{cfg.backbone}/{cfg.num_version}")
     checkpoint_callback = ModelCheckpoint(
         dirpath=cfg.log_dir,
-        filename='{epoch}-{val_loss:.3f}-{val_f1:.3f}-{val_eer:.3f}',
-        monitor="val_eer",
+        filename='{epoch}-{val_loss:.3f}-{val_auc:.3f}-{val_eer:.3f}',
+        monitor="val_auc",
         save_last=True,
         save_top_k=max(5,cfg.num_epochs//5),
-        mode = "min",
+        mode = "max",
         every_n_epochs=cfg.save_weight_frequency
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')

@@ -18,37 +18,59 @@ class LivenessDataset(Dataset):
     def __getitem__(self, idx):
         item = self.df.iloc[idx]
         item_name = item["fname"].split(".")[0]
-        
-        # get item from extracted frames folder
-        # item_path = os.path.join(self.root_dir, f"extracted_frames/{item_name}/0.{self.ext}") # just use the first frame
-        # img = cv2.imread(item_path)
+        print(f"Use {self.num_frames} frame | Load image from {self.ext}")
 
-        # get item directly from original video
-        item_path = os.path.join(self.root_dir, f"videos/{item_name}.mp4")
-        if(not os.path.exists(item_path)):
-            print("Invalid path:", item_path)
-        cap = cv2.VideoCapture(item_path)
-        total_frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        if self.ext == "jpg" or self.ext == "png":
+            item_path = os.path.join(self.root_dir, f"extracted_frames/{item_name}")
+            if(not os.path.exists(item_path)):
+                print("Invalid path:", item_path)
+            total_frames = len(os.listdir(item_path))
 
-        if self.num_frames == 1:
-            cap.set(1,0)
-            ret, img = cap.read()
-            if self.transforms:
-                imgs = self.transforms(image=img)["image"].float()
-        else:
-            step = np.floor(total_frame / self.num_frames)
-            frames = [i*step for i in range(self.num_frames)]
-            imgs = []
-            for frame in frames:
-                cap.set(1,frame) # 0 is the frame you want
-                ret, img = cap.read()
-                if ret:
+            if self.num_frames == 1:
+                id_frame = np.random.randint(total_frames)
+                img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
+                if self.transforms:
+                    img = self.transforms(image=img)["image"].float()
+                imgs = img
+            else:
+                step = np.floor(total_frames / self.num_frames)
+                frames = [i*step for i in range(self.num_frames)]
+                imgs = []
+                for id_frame in frames:
+                    img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
                     if self.transforms:
                         img = self.transforms(image=img)["image"].float()
                     imgs.append(img)
-                else:
-                    print(f"The number of frames is not enough | Total frame: {total_frame} | {frames}")
-            imgs = np.stack(imgs, 0)
+                imgs = np.stack(imgs, 0)
+
+        # get item directly from original video
+        elif self.ext == "mp4":
+            item_path = os.path.join(self.root_dir, f"videos/{item_name}.mp4")
+            if(not os.path.exists(item_path)):
+                print("Invalid path:", item_path)
+            cap = cv2.VideoCapture(item_path)
+            total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+
+            if self.num_frames == 1:
+                cap.set(1,0)
+                ret, img = cap.read()
+                if self.transforms:
+                    img = self.transforms(image=img)["image"].float()
+                imgs = img
+            else:
+                step = np.floor(total_frames / self.num_frames)
+                frames = [i*step for i in range(self.num_frames)]
+                imgs = []
+                for frame in frames:
+                    cap.set(1,frame) # 0 is the frame you want
+                    ret, img = cap.read()
+                    if ret:
+                        if self.transforms:
+                            img = self.transforms(image=img)["image"].float()
+                        imgs.append(img)
+                    else:
+                        print(f"The number of frames is not enough | Total frame: {total_frames} | {frames}")
+                imgs = np.stack(imgs, 0)
 
         if "liveness_score" in self.df.columns:
             label = torch.tensor(item["liveness_score"]).float()

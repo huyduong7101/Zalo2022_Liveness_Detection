@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 import torch
 import torch.nn as nn
@@ -39,7 +39,7 @@ class LivenessModel2D(pl.LightningModule):
         num_train_steps = steps_per_epoch * self.cfg.num_epochs
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=self.cfg.learning_rate, steps_per_epoch=steps_per_epoch, epochs=self.cfg.num_epochs)
         # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_train_steps, eta_min=self.cfg.learning_rate_min)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,10,15], gamma=0.5)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,10], gamma=0.1)
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler}}
 
     def forward(self, x):
@@ -89,10 +89,10 @@ class LivenessModel2D(pl.LightningModule):
     def compute_metrics(self, outputs):
         all_preds = np.concatenate([out['preds'].detach().cpu().numpy() for out in outputs])
         all_labels = np.concatenate([out['labels'].detach().cpu().numpy() for out in outputs])
-        all_preds = (all_preds > self.cfg.liveness_threshold).astype(int)
-        f1 = float(f1_score(y_true=all_labels, y_pred=all_preds))
+        # all_logits = (all_preds > self.cfg.liveness_threshold).astype(int)
+        auc = float(roc_auc_score(all_labels, all_preds))
         eer, _ = equal_error_rate(all_labels, all_preds)
-        return {"f1": f1, "eer": eer}
+        return {"auc": auc, "eer": eer}
 
     def training_epoch_end(self, training_step_outputs):
         metrics = self.compute_metrics(training_step_outputs)
