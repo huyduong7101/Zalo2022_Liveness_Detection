@@ -11,14 +11,15 @@ class LivenessDataset(Dataset):
         self.ext = ext
         self.transforms = transforms
         self.num_frames = num_frames
-
+        print(f"Use {self.num_frames} frame | Load image from {self.ext}")
+        
     def __len__(self):
         return self.df.shape[0]
 
     def __getitem__(self, idx):
         item = self.df.iloc[idx]
         item_name = item["fname"].split(".")[0]
-        print(f"Use {self.num_frames} frame | Load image from {self.ext}")
+
 
         if self.ext == "jpg" or self.ext == "png":
             item_path = os.path.join(self.root_dir, f"extracted_frames/{item_name}")
@@ -33,14 +34,17 @@ class LivenessDataset(Dataset):
                     img = self.transforms(image=img)["image"].float()
                 imgs = img
             else:
-                step = np.floor(total_frames / self.num_frames)
+                step = int(np.floor(total_frames / self.num_frames))
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
                 for id_frame in frames:
-                    img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
-                    if self.transforms:
-                        img = self.transforms(image=img)["image"].float()
-                    imgs.append(img)
+                    try:
+                        img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
+                        if self.transforms:
+                            img = self.transforms(image=img)["image"].float()
+                        imgs.append(img)
+                    except:
+                        print(f"Invalid path: id_frame {id_frame} | total_frames {total_frames}")
                 imgs = np.stack(imgs, 0)
 
         # get item directly from original video
@@ -58,7 +62,7 @@ class LivenessDataset(Dataset):
                     img = self.transforms(image=img)["image"].float()
                 imgs = img
             else:
-                step = np.floor(total_frames / self.num_frames)
+                step = int(np.floor(total_frames / self.num_frames))
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
                 for frame in frames:

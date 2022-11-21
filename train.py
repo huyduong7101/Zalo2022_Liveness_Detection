@@ -3,6 +3,7 @@ import pandas as pd
 
 import os
 import tqdm
+import json
 import argparse
 import importlib
 import cv2
@@ -31,7 +32,7 @@ def opt():
     parser.add_argument('--learning_rate', type=float, default=1e-4, help="device")
     parser.add_argument('--learning_rate_min', type=float, default=1e-6, help="device")
     parser.add_argument('--batch_size', type=int, default=4, help="device")
-    parser.add_argument('--backbone', type=str, default="tf_efficientnet_b2_ns", help="accelerator")
+    parser.add_argument('--backbone', type=str, default=None, help="accelerator")
 
     # data
     parser.add_argument('--num_frames', type=int, default=1, help="device")
@@ -51,7 +52,8 @@ def opt():
     cfg.learning_rate = args.learning_rate
     cfg.learning_rate_min = args.learning_rate_min
     cfg.batch_size = args.batch_size
-    cfg.backbone = args.backbone
+    if args.backbone:
+        cfg.backbone = args.backbone
 
     # data
     cfg.num_frames = args.num_frames
@@ -103,7 +105,15 @@ def main(cfg, args):
     print(f"Number of datapoints | train: {len(train_dataset)} | valid: {len(valid_dataset)}")
     print(f"Use {cfg.num_frames} frames")
     print(f"Model: {cfg.model_name} | Version: {trainer.logger.version}")
+    print(f"Log path: {cfg.log_dir}")
+    print(f"Config: {cfg.__dict__}")
     print("=="*20)
+
+    # if not os.path.exists(cfg.log_dir):
+    #     os.makedirs(cfg.log_dir)
+    # with open(os.path.join(cfg.log_dir, 'opt.json'), 'w') as f:
+    #     json.dump(cfg.__dict__.copy(), f, indent=2)
+
     trainer.fit(model, train_loader, valid_loader)
 
 if __name__ == "__main__":

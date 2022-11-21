@@ -4,7 +4,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 class CFG():
     # training
     model_name = "2D_multiframes"
-    backbone = "tf_efficientnet_b2_ns"
+    backbone = "tf_efficientnetv2_s_in21ft1k"
     pretrained = True
     head_type = "classify"
     use_lstm = False
@@ -13,17 +13,17 @@ class CFG():
     liveness_threshold = 0.5
 
     # data
-    height = 260
-    width = 260
-    num_frames = 3
+    height = 384
+    width = 384
+    num_frames = 5
     ext = "jpg"
     fold = 0
 
     # optimizer
     learning_rate = 1e-4
-    batch_size = 4
+    batch_size = 16
     num_workers = 2
-    num_epochs = 30
+    num_epochs = 20
 
     # log and path
     train_data_path = None
@@ -39,7 +39,7 @@ CFG.train_transforms = A.Compose(
             A.VerticalFlip(p=0.5),
             A.Transpose(p=0.5),
             # A.RandomBrightness(limit=0.1, p=0.5),
-            A.ShiftScaleRotate(shift_limit=0.25, scale_limit=0.25, rotate_limit=30, border_mode=4, p=0.5),
+            A.ShiftScaleRotate(shift_limit=0.25, scale_limit=[0, 0.25], rotate_limit=30, border_mode=4, p=0.5),
             A.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ToTensorV2(always_apply=True),
         ],
