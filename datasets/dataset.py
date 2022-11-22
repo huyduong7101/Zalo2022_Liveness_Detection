@@ -28,11 +28,14 @@ class LivenessDataset(Dataset):
             total_frames = len(os.listdir(item_path))
 
             if self.num_frames == 1:
-                id_frame = np.random.randint(total_frames)
-                img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
-                if self.transforms:
-                    img = self.transforms(image=img)["image"].float()
-                imgs = img
+                try:
+                    id_frame = np.random.randint(total_frames)
+                    img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
+                    if self.transforms:
+                        img = self.transforms(image=img)["image"].float()
+                    imgs = img
+                except:
+                    print(f"Invalid path: id_frame {id_frame} | total_frames {total_frames}")
             else:
                 step = int(np.floor(total_frames / self.num_frames))
                 frames = [i*step for i in range(self.num_frames)]
@@ -56,7 +59,8 @@ class LivenessDataset(Dataset):
             total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
             if self.num_frames == 1:
-                cap.set(1,0)
+                id_frame = np.random.randint(total_frames)
+                cap.set(1,id_frame)
                 ret, img = cap.read()
                 if self.transforms:
                     img = self.transforms(image=img)["image"].float()
@@ -65,15 +69,37 @@ class LivenessDataset(Dataset):
                 step = int(np.floor(total_frames / self.num_frames))
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
-                for frame in frames:
-                    cap.set(1,frame) # 0 is the frame you want
+
+                # option 1
+                # for frame in frames:
+                #     cap.set(1,frame) # 0 is the frame you want
+                #     ret, img = cap.read()
+                #     if ret:
+                #         if self.transforms:
+                #             img = self.transforms(image=img)["image"].float()
+                #         imgs.append(img)
+                #     else:
+                #         print(f"The number of frames is not enough | Total frame: {total_frames} | {frames}")
+
+                # option 2
+                count = 0
+                i = 0
+                while True:
                     ret, img = cap.read()
                     if ret:
-                        if self.transforms:
-                            img = self.transforms(image=img)["image"].float()
-                        imgs.append(img)
+                        if count % step == 0:
+                            if self.transforms:
+                                img = self.transforms(image=img)["image"].float()
+                            imgs.append(img)
+                            i += 1
+                            if i == self.num_frames:
+                                break
+                        count += 1
                     else:
-                        print(f"The number of frames is not enough | Total frame: {total_frames} | {frames}")
+                        if i < self.num_frames:
+                            print(f"The number of frames is not enough | Total frame: {total_frames} | {count}")
+                        break 
+
                 imgs = np.stack(imgs, 0)
 
         if "liveness_score" in self.df.columns:

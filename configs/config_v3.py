@@ -2,35 +2,7 @@ import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 
 class CFG():
-    # training
-    model_name = "2D_multiframes"
-    backbone = "tf_efficientnetv2_s_in21ft1k"
-    pretrained = True
-    head_type = "classify"
-    use_lstm = False
-    
-    # hyperparameters
-    liveness_threshold = 0.5
-
-    # data
-    height = 384
-    width = 384
-    num_frames = 5
-    ext = "jpg"
-    fold = 0
-
-    # optimizer
-    learning_rate = 1e-4
-    batch_size = 16
-    num_workers = 2
-    num_epochs = 20
-
-    # log and path
-    train_data_path = None
-    test_data_path = None
-    save_weight_frequency = 1
-    comet_api_key = "MqbVRKXYTLalajpK9uSDwDtOk"
-    comet_project_name = "Zalo2022_LivenessDetection"
+    description = "Transform config"
 
 CFG.train_transforms = A.Compose(
         [
