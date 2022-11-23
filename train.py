@@ -50,6 +50,8 @@ def opt():
     parser.add_argument('--num_frames', type=int, default=1, help="")
     parser.add_argument('--ext', type=str, default="mp4", help="")
     parser.add_argument('--fold', type=int, default=0, help="")
+    parser.add_argument('--frame_step', type=int, default=-1, help="")
+
 
     # comet
     parser.add_argument('--comet_api_key', type=str, default= "MqbVRKXYTLalajpK9uSDwDtOk", help="")
@@ -70,8 +72,8 @@ def main(cfg, transform_cfg):
 
     train_transforms = transform_cfg.create_train_transforms(cfg.width, cfg.height)
     val_transforms = transform_cfg.create_val_transforms(cfg.width, cfg.height)
-    train_dataset = LivenessDataset(df=train_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=train_transforms, num_frames=cfg.num_frames)
-    valid_dataset = LivenessDataset(df=valid_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=val_transforms, num_frames=cfg.num_frames)
+    train_dataset = LivenessDataset(df=train_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=train_transforms, num_frames=cfg.num_frames, frame_step=cfg.frame_step)
+    valid_dataset = LivenessDataset(df=valid_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=val_transforms, num_frames=cfg.num_frames, frame_step=cfg.frame_step)
 
     cfg.len_train = len(train_dataset)
 

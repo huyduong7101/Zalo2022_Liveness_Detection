@@ -6,12 +6,13 @@ from torch.utils.data import Dataset
 import albumentations as A
 
 class LivenessDataset(Dataset):
-    def __init__(self, df, root_dir, ext="jpg", transforms=None, num_frames=1):
+    def __init__(self, df, root_dir, ext="jpg", transforms=None, num_frames=1, frame_step=-1):
         self.df = df
         self.root_dir = root_dir
         self.ext = ext
         self.transforms = transforms
         self.num_frames = num_frames
+        self.frame_step = frame_step
         print(f"Use {self.num_frames} frame | Load image from {self.ext}")
         
     def __len__(self):
@@ -38,7 +39,10 @@ class LivenessDataset(Dataset):
                 except:
                     print(f"Invalid path: id_frame {id_frame} | total_frames {total_frames}")
             else:
-                step = min(total_frames // self.num_frames, 5)
+                if self.frame_step == -1:
+                    step = total_frames // self.num_frames
+                else:
+                    step = min(total_frames // self.num_frames, self.frame_step)
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
                 for cnt, id_frame in enumerate(frames):
@@ -71,7 +75,10 @@ class LivenessDataset(Dataset):
                     img = self.transforms(image=img)["image"].float()
                 imgs = img
             else:
-                step = min(total_frames // self.num_frames, 5)
+                if self.frame_step == -1:
+                    step = total_frames // self.num_frames
+                else:
+                    step = min(total_frames // self.num_frames, self.frame_step)
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
 
