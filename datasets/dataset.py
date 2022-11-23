@@ -38,14 +38,18 @@ class LivenessDataset(Dataset):
                 except:
                     print(f"Invalid path: id_frame {id_frame} | total_frames {total_frames}")
             else:
-                step = int(np.floor(total_frames / self.num_frames))
+                step = min(total_frames // self.num_frames, 5)
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
-                for id_frame in frames:
+                for cnt, id_frame in enumerate(frames):
                     try:
                         img = cv2.imread(f"{item_path}/{id_frame}.{self.ext}")
                         if self.transforms:
-                            img = self.transforms(image=img)["image"].float()
+                            if cnt == 0:
+                                replay_aug = self.transforms(image=img)
+                                img = replay_aug["image"].float()
+                            else:
+                                img = A.ReplayCompose.replay(replay_aug['replay'], image=img)["image"].float()
                         imgs.append(img)
                     except:
                         print(f"Invalid path: id_frame {id_frame} | total_frames {total_frames}")
@@ -67,7 +71,7 @@ class LivenessDataset(Dataset):
                     img = self.transforms(image=img)["image"].float()
                 imgs = img
             else:
-                step = int(np.floor(total_frames / self.num_frames))
+                step = min(total_frames // self.num_frames, 5)
                 frames = [i*step for i in range(self.num_frames)]
                 imgs = []
 
@@ -94,9 +98,9 @@ class LivenessDataset(Dataset):
                                     replay_aug = self.transforms(image=img) 
                                     img = replay_aug["image"].float()
                                 else:
-                                    img = A.ReplayCompose.replay(replay_aug['replay'], img)['image'].float()
+                                    img = A.ReplayCompose.replay(replay_aug['replay'], image=img)['image'].float()
                             imgs.append(img)
-                            
+
                             len_imgs += 1
                             if len_imgs == self.num_frames:
                                 break
