@@ -89,10 +89,10 @@ def main(cfg, transform_cfg):
     checkpoint_callback = ModelCheckpoint(
         dirpath=cfg.log_dir,
         filename='{epoch}-{val_loss:.3f}-{val_auc:.3f}-{val_eer:.3f}',
-        monitor="val_auc",
+        monitor="val_loss",
         save_last=True,
         save_top_k=max(5,cfg.num_epochs//5),
-        mode = "max",
+        mode = "min",
         every_n_epochs=cfg.save_weight_frequency
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')

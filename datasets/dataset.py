@@ -3,6 +3,7 @@ import cv2
 import os
 import torch 
 from torch.utils.data import Dataset
+import albumentations as A
 
 class LivenessDataset(Dataset):
     def __init__(self, df, root_dir, ext="jpg", transforms=None, num_frames=1):
@@ -83,24 +84,30 @@ class LivenessDataset(Dataset):
 
                 # option 2
                 count = 0
-                i = 0
+                len_imgs = 0
                 while True:
                     ret, img = cap.read()
                     if ret:
-                        if count % step == 0:
+                        if img is not None and count % step == 0:
                             if self.transforms:
-                                img = self.transforms(image=img)["image"].float()
+                                if len_imgs == 0:
+                                    replay_aug = self.transforms(image=img) 
+                                    img = replay_aug["image"].float()
+                                else:
+                                    img = A.ReplayCompose.replay(replay_aug['replay'], img)['image'].float()
                             imgs.append(img)
-                            i += 1
-                            if i == self.num_frames:
+                            
+                            len_imgs += 1
+                            if len_imgs == self.num_frames:
                                 break
                         count += 1
                     else:
-                        if i < self.num_frames:
+                        if len_imgs < self.num_frames:
                             print(f"The number of frames is not enough | Total frame: {total_frames} | {count}")
                         break 
-
+ 
                 imgs = np.stack(imgs, 0)
+            cap.release()
 
         if "liveness_score" in self.df.columns:
             label = torch.tensor(item["liveness_score"]).float()
