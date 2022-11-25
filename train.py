@@ -23,6 +23,7 @@ def opt():
     parser.add_argument('--transform_config', type=str, default='config_v0', help='config file')
     parser.add_argument('--data_dir', type=str, default='./data', help='data directory')
     parser.add_argument('--split_path', type=str, default='./data', help='data directory')
+    parser.add_argument('--face_crop_path', type=str, default=None, help='data directory')
     parser.add_argument('--log_dir', type=str, default='./checkpoints', help='data directory')
     parser.add_argument('--version_name', type=str, default="v0", help="")
     parser.add_argument('--model_name', type=str, default="2D_baseline", help="")
@@ -51,6 +52,7 @@ def opt():
     parser.add_argument('--ext', type=str, default="mp4", help="")
     parser.add_argument('--fold', type=int, default=0, help="")
     parser.add_argument('--frame_step', type=int, default=-1, help="")
+    parser.add_argument('--crop_face', type=bool, default=False, help="")
 
 
     # comet
@@ -66,14 +68,23 @@ def main(cfg, transform_cfg):
     cfg.log_dir = os.path.join(cfg.log_dir, os.path.join(f"{cfg.model_name}_{cfg.backbone}", cfg.version_name))
 
     data_df = pd.read_csv(cfg.split_path)
+    if cfg.crop_face:
+        face_crop_df = pd.read_csv(cfg.face_crop_path)
+
     data_df = data_df[data_df.set == "train"]
     train_df = data_df[data_df['fold']!=float(cfg.fold)].reset_index(drop=True)
     valid_df = data_df[data_df['fold']==float(cfg.fold)].reset_index(drop=True)
 
     train_transforms = transform_cfg.create_train_transforms(cfg.width, cfg.height)
     val_transforms = transform_cfg.create_val_transforms(cfg.width, cfg.height)
-    train_dataset = LivenessDataset(df=train_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=train_transforms, num_frames=cfg.num_frames, frame_step=cfg.frame_step)
-    valid_dataset = LivenessDataset(df=valid_df, root_dir=cfg.data_dir, ext=cfg.ext, transforms=val_transforms, num_frames=cfg.num_frames, frame_step=cfg.frame_step)
+    train_dataset = LivenessDataset(df=train_df, root_dir=cfg.data_dir, 
+                                    ext=cfg.ext, transforms=train_transforms, 
+                                    num_frames=cfg.num_frames, frame_step=cfg.frame_step,
+                                    crop_face=cfg.crop_face, face_crop_df=face_crop_df)
+    valid_dataset = LivenessDataset(df=valid_df, root_dir=cfg.data_dir, 
+                                    ext=cfg.ext, transforms=val_transforms, 
+                                    num_frames=cfg.num_frames, frame_step=cfg.frame_step,
+                                    crop_face=False)
 
     cfg.len_train = len(train_dataset)
 
