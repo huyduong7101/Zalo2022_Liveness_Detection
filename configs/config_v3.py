@@ -6,7 +6,7 @@ class CFG():
 
     @staticmethod
     def create_train_transforms(width, height):
-        train_transforms = A.Compose(
+        train_transforms = A.ReplayCompose(
                 [
                     A.Resize(height=height, width=width, always_apply=True),
                     A.HorizontalFlip(p=0.5),
@@ -23,7 +23,7 @@ class CFG():
 
     @staticmethod
     def create_val_transforms(width, height):
-        val_transforms = A.Compose(
+        val_transforms = A.ReplayCompose(
                 [
                     A.Resize(height=height, width=width, always_apply=True),
                     A.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
